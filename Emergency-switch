@@ -1,6 +1,17 @@
-{ config, pkgs, ... }:
+# In /etc/nixos/configuration.nix
 
-{
-  # Enable Flatpak support
-  services.flatpak.enable = true;
-}
+# Filesystem Configuration
+fileSystems."/" = {
+  device = "/dev/sdX1"; # Replace with your actual root partition
+  fsType = "ext4"; # Replace with your filesystem type if different (e.g., btrfs, ext4, etc.)
+};
+
+# Bootloader Configuration
+boot.loader.grub.enable = true;
+boot.loader.grub.version = 2;
+boot.loader.grub.device = "/dev/sdX"; # Replace with your boot drive (e.g., /dev/sda)
+
+# Flatpak and XDG Portal Configuration
+environment.systemPackages = with pkgs; [ flatpak ];
+programs.flatpak.enable = true;
+services.xdg.portal.enable = true;
