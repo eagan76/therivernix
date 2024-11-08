@@ -49,8 +49,10 @@ in
     enable = true; # Enable X11 support
     layout = "us";
     xkbOptions = "terminate:ctrl_alt_bksp";
-    windowManager.river.enable = true; # Enable River for Wayland
   };
+  
+  # Enable River window manager for Wayland
+  services.wayland.windowManager.river.enable = true;
 
   # Configure Wayland wallpaper and SDDM background
   environment.etc."wayland-wallpaper.svg".source = wallpaperPath;
@@ -59,29 +61,31 @@ in
   # Waybar configuration with floating and rounded design
   services.waybar = {
     enable = true;
-    extraConfig = {
-      "layer-shell" = {
-        layer = "top";
-        height = 35;
-        margin-top = 5;
-        margin-bottom = 5;
-        radius = 10; # Rounded corners
-        background-color = "#1E1E1E";
-        font-family = "monospace";
-        font-size = 12;
-        items = ["left", "center", "right"];
-        left = [
-          { "icon": "", "action": "rofi -show drun" } # Rofi launcher
-        ];
-        center = [
-          { "text": "CPU: $(cpu_usage)% | RAM: $(ram_usage)% | Vol: $(volume)%" }
-        ];
-        right = [
-          { "text": "Time: $(time)" },
-          { "icon": "", "action": "poweroff" } # Power menu
-        ];
+    extraConfig = ''
+      {
+        "layer-shell" = {
+          "layer": "top",
+          "height": 35,
+          "margin-top": 5,
+          "margin-bottom": 5,
+          "radius": 10, # Rounded corners
+          "background-color": "#1E1E1E",
+          "font-family": "monospace",
+          "font-size": 12,
+          "items": ["left", "center", "right"],
+          "left": [
+            { "icon": "", "action": "rofi -show drun" } # Rofi launcher
+          ],
+          "center": [
+            { "text": "CPU: $(cpu_usage)% | RAM: $(ram_usage)% | Vol: $(volume)%" }
+          ],
+          "right": [
+            { "text": "Time: $(time)" },
+            { "icon": "", "action": "poweroff" } # Power menu
+          ]
+        }
       };
-    };
+    '';
   };
 
   # Custom keybindings for River window manager
