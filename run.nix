@@ -39,7 +39,7 @@ in
     wayland = true;
     settings = {
       General = {
-        Background = "${wallpaperPath}";
+        Background = wallpaperPath;
       };
     };
   };
@@ -59,7 +59,7 @@ in
   # Waybar configuration with floating and rounded design
   services.waybar = {
     enable = true;
-    config = {
+    extraConfig = {
       "layer-shell" = {
         layer = "top";
         height = 35;
@@ -105,27 +105,11 @@ in
     GTK_THEME = "Materia"; # GTK theme matching Qt theme
   };
 
-  # Configure icons and theme
+  # Configure icons and theme for GTK
   environment.etc."gtk-3.0/settings.ini".text = ''
     [Settings]
     gtk-theme-name = "Materia"
     gtk-icon-theme-name = "ePapirus"
     gtk-font-name = "monospace 11"
   '';
-
-  # Waybar custom config for CPU/RAM/Volume monitoring
-  waybar.config = {
-    layer-shell = {
-      center = [
-        { text = "CPU: $(cpu_usage)% | RAM: $(ram_usage)% | Vol: $(volume)%" }
-      ];
-      left = [
-        { text = "Launcher", icon = "", action = "rofi -show drun" }
-      ];
-      right = [
-        { text = "Time: $(time)", icon = "" },
-        { text = "Shutdown", icon = "", action = "poweroff" }
-      ];
-    };
-  };
 }
