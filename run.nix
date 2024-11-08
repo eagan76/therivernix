@@ -1,119 +1,150 @@
 { config, pkgs, ... }:
 
-let
-  # Define the wallpaper path, replace with the actual path if necessary
-  wallpaperPath = "/etc/nixos/wallpaper.svg";
-in
-
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  # Enable audio and set up PulseAudio
+  sound.enable = true;
+  hardware.pulseaudio.enable = true;
 
-  # Set the hostname
-  networking.hostName = "nixos";
-
-  # Install necessary system packages with Qt prioritization
+  # Install necessary system packages
   environment.systemPackages = with pkgs; [
-    git
-    river
+    pulseaudio
+    pavucontrol
     waybar
     rofi-wayland
+    river
     kitty
-    pcmanfm-qt # Qt-based file manager
+    pcmanfm
+    qt5ct
+    materia-theme
     epapirus-icon-theme
-    materia-kde # Use Materia theme adapted for Qt/KDE
-    qt5.qtwayland # Qt Wayland support
-    pulseaudio
     networkmanager
-    btop # For monitoring CPU and RAM
-    lxqt # Qt desktop components for additional Qt integration
-    gtk3 # GTK libraries for compatibility with GTK apps
-    gtk4
+    btop
   ];
 
-  # Enable SDDM with custom theme and wallpaper
-  services.sddm = {
+  # Disable GDM if starting from GNOME version
+  services.xserver.displayManager.gdm.enable = false;
+
+  # Enable SDDM with custom configuration
+  services.xserver.displayManager.sddm = {
     enable = true;
-    theme = "materia";
-    wayland = true;
-    settings = {
-      General = {
-        Background = wallpaperPath;
-      };
-    };
-  };
-
-  # Enable both X11 and Wayland support
-  services.xserver = {
-    enable = true; # Enable X11 support
-    layout = "us";
-    xkbOptions = "terminate:ctrl_alt_bksp";
-  };
-  
-  # Enable River window manager for Wayland
-  services.wayland.windowManager.river.enable = true;
-
-  # Configure Wayland wallpaper and SDDM background
-  environment.etc."wayland-wallpaper.svg".source = wallpaperPath;
-  environment.etc."sddm-wallpaper.svg".source = wallpaperPath;
-
-  # Waybar configuration with floating and rounded design
-  services.waybar = {
-    enable = true;
+    theme = "candy"; # Ensure this theme is available or replace if necessary
     extraConfig = ''
-      {
-        "layer-shell" = {
-          "layer": "top",
-          "height": 35,
-          "margin-top": 5,
-          "margin-bottom": 5,
-          "radius": 10, # Rounded corners
-          "background-color": "#1E1E1E",
-          "font-family": "monospace",
-          "font-size": 12,
-          "items": ["left", "center", "right"],
-          "left": [
-            { "icon": "", "action": "rofi -show drun" } # Rofi launcher
-          ],
-          "center": [
-            { "text": "CPU: $(cpu_usage)% | RAM: $(ram_usage)% | Vol: $(volume)%" }
-          ],
-          "right": [
-            { "text": "Time: $(time)" },
-            { "icon": "", "action": "poweroff" } # Power menu
-          ]
-        }
-      };
+      Hostname=Stickman-OS
+      Background=/path/to/your/sddm-background.svg # Replace with the correct path
     '';
   };
 
-  # Custom keybindings for River window manager
-  xsession.windowManager.command = ''
-    riverctl map normal Mod4 Return spawn kitty
-    riverctl map normal Mod4 d spawn "rofi -show drun"
-    riverctl map normal Mod4+Shift Q close
-    riverctl map normal Mod4+Ctrl Arrow focus-view in-direction
-    riverctl map normal Mod4+Ctrl+Shift Arrow resize
-  '';
-
-  # Enable and configure Pulseaudio and NetworkManager
-  services.pulseaudio.enable = true;
-  networking.networkmanager.enable = true;
-
-  # Set environment variables for fonts and GTK/Qt theme integration
-  environment.variables = {
-    FONT_FAMILY = "monospace";
-    QT_QPA_PLATFORM = "wayland"; # Ensure Qt applications use Wayland
-    QT_STYLE_OVERRIDE = "Breeze"; # Breeze style for Qt
-    GTK_THEME = "Materia"; # GTK theme matching Qt theme
+  # Enable Wayland and configure River as the window manager
+  services.xserver = {
+    enable = true;
+    displayManager.defaultSession = "river";
+    windowManager.river.enable = true;
   };
 
-  # Configure icons and theme for GTK
+  # Waybar Configuration
+  environment.etc."waybar/config" = {
+    text = ''
+      {
+        "layer": "top",
+        "position": "top",
+        "margin": 5,
+        "modules-left": [
+          {
+            "type": "custom/menu",
+            "format": "",  # Placeholder icon for launcher
+            "on-click": "rofi -show drun"
+          },
+          {
+            "type": "workspaces",
+            "max": 9,
+            "urgent": true,
+            "current-workspace": "underline",
+            "non-empty": "dot",
+            "empty": false
+          }
+        ],
+        "modules-center": [
+          {
+            "type": "clock",
+            "format": "%H:%M %p"
+          }
+        ],
+        "modules-right": [
+          {
+            "type": "pulseaudio",
+            "format": "{volume}% ",
+            "tooltip": "Volume Control",
+            "on-click": "pavucontrol"
+          },
+          {
+            "type": "network",
+            "format": "{essid} {ip4} ",
+            "tooltip": "Network Status",
+            "on-click": "nm-connection-editor"
+          },
+          {
+            "type": "custom/btop",
+            "format": " {cpu_usage}%  {mem_usage}MB",
+            "on-click": "kitty -e btop"
+          },
+          {
+            "type": "custom/power",
+            "format": "",
+            "on-click": "poweroff"
+          }
+        ]
+      }
+    '';
+  };
+
+  # GTK and QT theme configurations as per your requirements
   environment.etc."gtk-3.0/settings.ini".text = ''
     [Settings]
     gtk-theme-name = "Materia"
     gtk-icon-theme-name = "ePapirus"
     gtk-font-name = "monospace 11"
   '';
+
+  # Ensure QT applications use the specified theme
+  environment.variables = {
+    QT_QPA_PLATFORMTHEME = "qt5ct";
+    GTK_THEME = "Materia";
+  };
+
+  # Define keybindings for River using riverctl
+  # This uses riverctl commands instead of configuration options
+  environment.etc."river/init" = {
+    text = ''
+      # Modifier key
+      mod="Mod4"
+
+      # Open applications
+      riverctl map normal $mod+Return spawn kitty
+      riverctl map normal $mod+D spawn rofi -show drun
+
+      # Close and kill windows
+      riverctl map normal $mod+Q close
+      riverctl map normal $mod+Shift+Q kill
+
+      # Move windows around with arrow keys
+      riverctl map normal $mod+Left move left 100
+      riverctl map normal $mod+Right move right 100
+      riverctl map normal $mod+Up move up 100
+      riverctl map normal $mod+Down move down 100
+
+      # Resize windows with Ctrl + Arrow keys
+      riverctl map normal $mod+Ctrl+Left resize left 100
+      riverctl map normal $mod+Ctrl+Right resize right 100
+      riverctl map normal $mod+Ctrl+Up resize up 100
+      riverctl map normal $mod+Ctrl+Down resize down 100
+
+      # Return to SDDM login screen with Ctrl+Alt+Delete
+      riverctl map normal $mod+Ctrl+Alt+Delete spawn sddm
+    '';
+    mode = "0755";
+  };
+
+  # Set wallpaper for Wayland and SDDM as specified
+  environment.etc."wayland-wallpaper.svg".source = /path/to/your/wallpaper.svg;
+  environment.etc."sddm/wallpaper.svg".source = /path/to/your/sddm-background.svg;
 }
