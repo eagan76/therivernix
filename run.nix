@@ -21,27 +21,26 @@
     btop
   ];
 
-  # Disable GDM if starting from GNOME version
-  services.xserver.displayManager.gdm.enable = false;
-
-  # Enable SDDM with custom configuration
-  services.xserver.displayManager.sddm = {
-    enable = true;
-    theme = "candy"; # Ensure this theme is available or replace if necessary
-    extraConfig = ''
+  # Enable SDDM with custom configuration for Wayland
+  services.xserver.displayManager = {
+    sddm.enable = true;
+    sddm.theme = "candy"; # Ensure this theme is available or replace if necessary
+    sddm.extraConfig = ''
       Hostname=Stickman-OS
       Background=/path/to/your/sddm-background.svg # Replace with the correct path
     '';
   };
 
-  # Enable Wayland and configure River as the window manager
+  # Configure River as the window manager with Wayland support
   services.xserver = {
     enable = true;
-    displayManager.defaultSession = "river";
-    windowManager.river.enable = true;
+    wayland = {
+      enable = true;
+      windowManager.river.enable = true;
+    };
   };
 
-  # Waybar Configuration
+  # Waybar Configuration for River
   environment.etc."waybar/config" = {
     text = ''
       {
@@ -112,7 +111,6 @@
   };
 
   # Define keybindings for River using riverctl
-  # This uses riverctl commands instead of configuration options
   environment.etc."river/init" = {
     text = ''
       # Modifier key
